@@ -1,0 +1,18 @@
+# Fonte de dados do Grafana: a API REST do Pediu Patrão, lida pelo plugin Infinity (JSON/REST).
+# A chave vem da variável de ambiente DASHBOARD_API_KEY (definida no docker-compose.yml)
+# e é enviada em toda requisição no cabeçalho X-API-KEY.
+apiVersion: 1
+
+datasources:
+  - name: Pediu Patrão API
+    uid: pediupatrao-api
+    type: yesoreyeram-infinity-datasource
+    isDefault: true
+    editable: true
+    jsonData:
+      # O Grafana só envia a chave para estes endereços (proteção contra vazamento da chave)
+      allowedHosts:
+        - http://host.docker.internal:8080
+      httpHeaderName1: X-API-KEY
+    secureJsonData:
+      httpHeaderValue1: $DASHBOARD_API_KEY
