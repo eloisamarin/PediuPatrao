@@ -1,0 +1,1713 @@
+{
+  "uid": "pediupatrao-vendas",
+  "title": "Pediu Patrão — Dashboard Administrativo",
+  "description": "Vendas, pedidos e produtos. Dados da API /api/dashboard/** do sistema Pediu Patrão.",
+  "tags": [
+    "pediupatrao",
+    "vendas"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m",
+      "15m"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "type": "constant",
+        "name": "api",
+        "hide": 2,
+        "query": "http://host.docker.internal:8080",
+        "current": {
+          "text": "http://host.docker.internal:8080",
+          "value": "http://host.docker.internal:8080"
+        }
+      },
+      {
+        "type": "custom",
+        "name": "status",
+        "label": "Status",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "query": "Todos : todos,Recebido : RECEBIDO,Em preparação : EM_PREPARACAO,Pronto : PRONTO,Saiu para entrega : SAIU_PARA_ENTREGA,Retirado : RETIRADO,Finalizado : FINALIZADO,Cancelado : CANCELADO",
+        "options": [
+          {
+            "text": "Todos",
+            "value": "todos",
+            "selected": true
+          },
+          {
+            "text": "Recebido",
+            "value": "RECEBIDO",
+            "selected": false
+          },
+          {
+            "text": "Em preparação",
+            "value": "EM_PREPARACAO",
+            "selected": false
+          },
+          {
+            "text": "Pronto",
+            "value": "PRONTO",
+            "selected": false
+          },
+          {
+            "text": "Saiu para entrega",
+            "value": "SAIU_PARA_ENTREGA",
+            "selected": false
+          },
+          {
+            "text": "Retirado",
+            "value": "RETIRADO",
+            "selected": false
+          },
+          {
+            "text": "Finalizado",
+            "value": "FINALIZADO",
+            "selected": false
+          },
+          {
+            "text": "Cancelado",
+            "value": "CANCELADO",
+            "selected": false
+          }
+        ],
+        "current": {
+          "text": "Todos",
+          "value": "todos"
+        }
+      },
+      {
+        "type": "custom",
+        "name": "categoria",
+        "label": "Categoria",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "query": "Todas : todas,Pizza : Pizza,Esfiha : Esfiha,Lanche : Lanche,Bebida : Bebida",
+        "options": [
+          {
+            "text": "Todas",
+            "value": "todas",
+            "selected": true
+          },
+          {
+            "text": "Pizza",
+            "value": "Pizza",
+            "selected": false
+          },
+          {
+            "text": "Esfiha",
+            "value": "Esfiha",
+            "selected": false
+          },
+          {
+            "text": "Lanche",
+            "value": "Lanche",
+            "selected": false
+          },
+          {
+            "text": "Bebida",
+            "value": "Bebida",
+            "selected": false
+          }
+        ],
+        "current": {
+          "text": "Todas",
+          "value": "todas"
+        }
+      },
+      {
+        "type": "custom",
+        "name": "agrupamento",
+        "label": "Agrupar por",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "query": "Dia : DIA,Semana : SEMANA,Mês : MES",
+        "options": [
+          {
+            "text": "Dia",
+            "value": "DIA",
+            "selected": true
+          },
+          {
+            "text": "Semana",
+            "value": "SEMANA",
+            "selected": false
+          },
+          {
+            "text": "Mês",
+            "value": "MES",
+            "selected": false
+          }
+        ],
+        "current": {
+          "text": "Dia",
+          "value": "DIA"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Faturamento",
+      "description": "Soma da receita líquida dos pedidos não cancelados.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "faturamento",
+              "text": "Faturamento",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyBRL",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Pedidos válidos",
+      "description": "Pedidos do período, sem os cancelados.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "pedidosValidos",
+              "text": "Pedidos válidos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Ticket médio",
+      "description": "Faturamento ÷ pedidos válidos.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "ticketMedio",
+              "text": "Ticket médio",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyBRL",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Cancelamentos",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "pedidosCancelados",
+              "text": "Cancelamentos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Taxa de cancelamento",
+      "description": "Cancelados ÷ total de pedidos.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "taxaCancelamento",
+              "text": "Taxa de cancelamento",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Variação do faturamento",
+      "description": "Comparação com o período anterior de mesmo tamanho.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "comparativo.variacaoFaturamento",
+              "text": "Variação do faturamento",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Itens vendidos",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "itensVendidos",
+              "text": "Itens vendidos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Descontos concedidos",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "totalDescontos",
+              "text": "Descontos concedidos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyBRL",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Tempo médio até a saída",
+      "description": "Minutos entre a entrada do pedido e a saída para entrega/retirada.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "tempoMedioSaidaMinutos",
+              "text": "Tempo médio até a saída",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "teal"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Total de pedidos",
+      "description": "Inclui os cancelados.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/resumo",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "totalPedidos",
+              "text": "Total de pedidos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 11,
+      "type": "barchart",
+      "title": "Evolução das vendas",
+      "description": "Agrupamento escolhido na variável 'Agrupar por'.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 16,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/vendas",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              },
+              {
+                "key": "agrupamento",
+                "value": "$agrupamento"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "rotulo",
+              "text": "Período",
+              "type": "string"
+            },
+            {
+              "selector": "faturamento",
+              "text": "Faturamento",
+              "type": "number"
+            },
+            {
+              "selector": "pedidos",
+              "text": "Pedidos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Faturamento"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyBRL"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pedidos"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "vertical",
+        "xTickLabelRotation": 0,
+        "showValue": "auto",
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "piechart",
+      "title": "Situação dos pedidos",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 8,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/status",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "descricao",
+              "text": "Status",
+              "type": "string"
+            },
+            {
+              "selector": "quantidade",
+              "text": "Pedidos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Pedidos$/",
+          "values": true
+        },
+        "pieType": "donut",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value"
+          ]
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "barchart",
+      "title": "Top 10 produtos (quantidade)",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/produtos-mais-vendidos",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              },
+              {
+                "key": "limite",
+                "value": "10"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "nome",
+              "text": "Produto",
+              "type": "string"
+            },
+            {
+              "selector": "quantidade",
+              "text": "Quantidade",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0,
+        "showValue": "auto",
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Ranking de produtos",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/produtos-mais-vendidos",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              },
+              {
+                "key": "limite",
+                "value": "10"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "posicao",
+              "text": "#",
+              "type": "number"
+            },
+            {
+              "selector": "nome",
+              "text": "Produto",
+              "type": "string"
+            },
+            {
+              "selector": "categoria",
+              "text": "Categoria",
+              "type": "string"
+            },
+            {
+              "selector": "quantidade",
+              "text": "Qtd.",
+              "type": "number"
+            },
+            {
+              "selector": "faturamento",
+              "text": "Receita",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Receita"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyBRL"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 15,
+      "type": "barchart",
+      "title": "Pedidos por hora do dia",
+      "description": "Mostra o horário de pico.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/vendas-por-hora",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "hora",
+              "text": "Hora",
+              "type": "string"
+            },
+            {
+              "selector": "pedidos",
+              "text": "Pedidos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "xTickLabelRotation": 0,
+        "showValue": "auto",
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "barchart",
+      "title": "Faturamento por categoria",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 27,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/vendas-por-categoria",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "categoria",
+              "text": "Categoria",
+              "type": "string"
+            },
+            {
+              "selector": "faturamento",
+              "text": "Faturamento",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyBRL",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0,
+        "showValue": "auto",
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "table",
+      "title": "Últimos pedidos do período",
+      "description": "",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "pediupatrao-api"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "pediupatrao-api"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "table",
+          "url": "$api/api/dashboard/pedidos-recentes",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "inicio",
+                "value": "${__from:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "fim",
+                "value": "${__to:date:YYYY-MM-DD}"
+              },
+              {
+                "key": "status",
+                "value": "$status"
+              },
+              {
+                "key": "categoria",
+                "value": "$categoria"
+              },
+              {
+                "key": "limite",
+                "value": "20"
+              }
+            ]
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "dataCriacao",
+              "text": "Data",
+              "type": "string"
+            },
+            {
+              "selector": "cliente",
+              "text": "Cliente",
+              "type": "string"
+            },
+            {
+              "selector": "itens",
+              "text": "Itens",
+              "type": "string"
+            },
+            {
+              "selector": "descricaoStatus",
+              "text": "Status",
+              "type": "string"
+            },
+            {
+              "selector": "valor",
+              "text": "Valor",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Valor"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyBRL"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ]
+}
