@@ -7,26 +7,35 @@ própria. Com ele, o responsável pelo estabelecimento acompanha as vendas, a si
 
 | | |
 |---|---|
-| 🎬 [Vídeo do dashboard](#-vídeo-do-dashboard) | 📋 [Decumentação Completa](#1-Documentacao) |
+| 🎬 [Vídeo do dashboard](#-vídeo-do-dashboard) | 📄 [Documentação completa (PDF)](PediuPatrao/docs/Documentacao%20Pediu%20Patrao.pdf) |
 
 ---
 
 ## 🎬 Vídeo do dashboard
 
-Demonstração do Dashboard Administrativo
+📁 **[Abrir a pasta do vídeo](PediuPatrao/docs/video)**
 
-*DePedidos de uma pizzaria de médio porte: login, indicadores, gráficos,
+▶️ **[Assistir ao vídeo](PediuPatrao/docs/video/Video%20Pediu%20Patrao.mp4)**
+
+
+*Demonstração com pedidos de uma pizzaria de médio porte: login, indicadores, gráficos,
 ranking, últimos pedidos, filtros, validação, a API REST e o mesmo painel no Grafana.*
-🎬 [Vídeo do dashboard](#-vídeo-do-dashboard)
 
----
+## 📄 Documentação completa
+
+A documentação completa (requisitos funcionais e não funcionais, documentação dos endpoints,
+evidências de testes e manual do dashboard) está no PDF:
+**[Documentacao Pediu Patrao.pdf](PediuPatrao/docs/Documentacao%20Pediu%20Patrao.pdf)**
+
+
+
 
 ## 1. Requisitos funcionais e não funcionais
 
 
 ### Requisitos funcionais
 
-| ID | Requisito | Descriçãoo |
+| ID | Requisito | Descrição |
 |---|---|---|
 | **RF01** | Indicadores gerais de vendas | Faturamento, pedidos válidos, ticket médio, cancelamentos (qtd. e %), itens vendidos, descontos, tempo médio de atendimento, horário de pico, produto campeão e **variação em relação ao período anterior** |
 | **RF02** | Análise de vendas (gráficos) | Evolução de faturamento × pedidos (por dia, semana ou mês), pedidos por hora do dia e faturamento por categoria |
