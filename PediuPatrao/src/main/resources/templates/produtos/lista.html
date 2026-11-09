@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Produtos</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-boxes me-2 text-primary"></i>Produtos
+        </h2>
+        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#formularioProduto"
+                sec:authorize="hasRole('GERENTE')">
+            <i class="bi bi-plus-lg me-1"></i> Novo Produto
+        </button>
+    </div>
+
+    <!-- Mensagens de feedback -->
+    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Formulário de cadastro/edição (somente GERENTE) -->
+    <div class="collapse mb-3" id="formularioProduto" sec:authorize="hasRole('GERENTE')">
+        <div class="card card-body shadow-sm" style="max-width: 600px;">
+            <form th:action="@{/produtos/salvar}" method="post" id="produtoForm">
+                <input type="hidden" id="produtoIdCampo" name="id">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome do Produto</label>
+                    <input type="text" id="nome" name="nome" class="form-control" placeholder="Ex: Pizza Grande" required>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-7">
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <select id="tipo" name="tipo" class="form-select" required>
+                            <option value="" disabled selected>Selecione o Tipo</option>
+                            <option value="Pizza">Pizza</option>
+                            <option value="Lanche">Lanche</option>
+                            <option value="Bebida">Bebida</option>
+                            <option value="Porção">Porção</option>
+                            <option value="Adicional">Adicional</option>
+                        </select>
+                    </div>
+                    <div class="col-5">
+                        <label for="preco" class="form-label">Preço (R$)</label>
+                        <input type="number" id="preco" name="preco" class="form-control" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="form-check mb-3">
+                    <input type="checkbox" id="ativo" name="ativo" value="true" class="form-check-input" checked>
+                    <label for="ativo" class="form-check-label">Produto Ativo</label>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="limparProduto()">Limpar</button>
+                    <button type="submit" class="btn btn-success">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Listagem -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Nome</th>
+                        <th>Tipo</th>
+                        <th class="text-end">Preço</th>
+                        <th>Ativo</th>
+                        <th class="text-end pe-4" sec:authorize="hasRole('GERENTE')">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(produtos)}">
+                        <td colspan="5" class="text-center text-muted py-5">Nenhum produto cadastrado.</td>
+                    </tr>
+                    <tr th:each="produto : ${produtos}">
+                        <td class="ps-4" th:text="${produto.nome}"></td>
+                        <td th:text="${produto.tipo}"></td>
+                        <td class="text-end"
+                            th:text="${produto.preco != null} ? 'R$ ' + ${#numbers.formatDecimal(produto.preco, 1, 'POINT', 2, 'COMMA')} : '—'"></td>
+                        <td>
+                            <span class="badge" th:classappend="${produto.ativo != null and produto.ativo} ? 'bg-success' : 'bg-secondary'"
+                                  th:text="${produto.ativo != null and produto.ativo} ? 'Sim' : 'Não'"></span>
+                        </td>
+                        <td class="text-end pe-4 text-nowrap" sec:authorize="hasRole('GERENTE')">
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    th:attr="data-id=${produto.id},data-nome=${produto.nome},data-tipo=${produto.tipo},data-preco=${produto.preco},data-ativo=${produto.ativo}"
+                                    onclick="editarProduto(this)">
+                                <i class="bi bi-pencil-fill"></i> Editar
+                            </button>
+                            <form th:action="@{/produtos/excluir/{id}(id=${produto.id})}" method="post" class="d-inline"
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este produto?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash-fill"></i> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function editarProduto(botao) {
+            const d = botao.dataset;
+            document.getElementById('produtoIdCampo').value = d.id;
+            document.getElementById('nome').value = d.nome || '';
+            document.getElementById('tipo').value = d.tipo || '';
+            document.getElementById('preco').value = d.preco || '';
+            document.getElementById('ativo').checked = d.ativo === 'true';
+            const painel = document.getElementById('formularioProduto');
+            bootstrap.Collapse.getOrCreateInstance(painel).show();
+            painel.scrollIntoView({ behavior: 'smooth' });
+        }
+        function limparProduto() {
+            document.getElementById('produtoForm').reset();
+            document.getElementById('produtoIdCampo').value = '';
+        }
+    </script>
+</div>
+</body>
+</html>

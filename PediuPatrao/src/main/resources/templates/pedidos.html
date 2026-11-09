@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Lista de Pedidos</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-bag me-2 text-primary"></i>Pedidos
+        </h2>
+        <a th:href="@{/pedidos/novo}" class="btn btn-primary" sec:authorize="hasRole('ATENDENTE')">
+            <i class="bi bi-plus-lg me-1"></i> Novo Pedido
+        </a>
+    </div>
+
+    <p class="text-muted small" sec:authorize="hasRole('ADMIN')">
+        <i class="bi bi-eye me-1"></i>Modo consulta: alterações de status, descontos e cancelamentos são feitos pelo gerente.
+    </p>
+
+    <!-- Mensagens de feedback -->
+    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Data</th>
+                        <th>Cliente</th>
+                        <th>Itens</th>
+                        <th class="text-end">Valor</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Lista vazia -->
+                    <tr th:if="${#lists.isEmpty(pedidos)}">
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            Nenhum pedido encontrado.
+                        </td>
+                    </tr>
+                    <!-- Linhas -->
+                    <th:block th:each="pedido : ${pedidos}">
+                    <tr>
+                        <td class="ps-4 text-muted small">
+                            <a th:href="@{/pedidos/{id}(id=${pedido.id})}" class="text-decoration-none"
+                               th:text="${pedido.dataCriacao != null} ? ${#temporals.format(pedido.dataCriacao, 'dd/MM HH:mm')} : 'ver'"></a>
+                            <div th:if="${pedido.criadoPor != null}" th:text="${pedido.criadoPor}"></div>
+                        </td>
+                        <td th:text="${nomesClientes[pedido.clienteId] ?: pedido.clienteId}"></td>
+                        <td>
+                            <a th:href="@{/pedidos/{id}(id=${pedido.id})}" class="text-reset text-decoration-none">
+                                <div th:each="descricao : ${pedido.descricaoItens}" class="small" th:text="${descricao}"></div>
+                            </a>
+                            <span th:if="${#lists.isEmpty(pedido.descricaoItens)}" class="text-muted">—</span>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <th:block th:if="${pedido.valorFinal != null}">
+                                <div th:if="${pedido.valorDesconto != null and pedido.valorDesconto > 0}"
+                                     class="small text-muted text-decoration-line-through"
+                                     th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorBruto, 1, 'POINT', 2, 'COMMA')}"></div>
+                                <strong th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorFinal, 1, 'POINT', 2, 'COMMA')}"></strong>
+                                <div th:if="${pedido.valorDesconto != null and pedido.valorDesconto > 0}" class="small text-success"
+                                     th:text="'-' + ${#numbers.formatDecimal(pedido.descontoPercentual, 1, 'POINT', 1, 'COMMA')} + '% desconto'"></div>
+                            </th:block>
+                            <span th:if="${pedido.valorFinal == null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:replace="~{fragments/status :: badge(${pedido})}"></span>
+                            <span class="badge bg-danger-subtle text-danger-emphasis ms-1"
+                                  th:if="${pedido.cancelamentoSolicitado and pedido.antesDaSaida}"
+                                  th:title="${pedido.motivoCancelamento}">
+                                <i class="bi bi-hourglass-split"></i> cancelamento solicitado
+                            </span>
+                            <span class="badge bg-success-subtle text-success-emphasis ms-1"
+                                  th:if="${pedido.descontoSolicitado and pedido.antesDaSaida}"
+                                  th:title="${pedido.motivoDesconto}">
+                                <i class="bi bi-hourglass-split"></i> desconto aguardando gerente
+                            </span>
+                        </td>
+                        <td class="text-end pe-4 text-nowrap" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    th:if="${!pedido.finalizado}"
+                                    data-bs-toggle="collapse" th:attr="data-bs-target='#acoes-' + ${pedido.id}">
+                                <i class="bi bi-three-dots"></i> Ações
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Painel de ações (abre ao clicar em "Ações") -->
+                    <tr class="collapse bg-light" th:id="'acoes-' + ${pedido.id}" th:if="${!pedido.finalizado}"
+                        sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+                        <td colspan="6" class="px-4 py-3">
+
+                            <!-- GERENTE: avançar status (só os próximos válidos), desconto e cancelamento -->
+                            <div class="row g-3" sec:authorize="hasRole('GERENTE')">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-medium">Avançar para</label>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <form th:each="prox : ${pedido.proximosStatus}" method="post"
+                                              th:action="@{/pedidos/{id}/status(id=${pedido.id})}">
+                                            <input type="hidden" name="status" th:value="${prox}">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-arrow-right-circle"></i> <span th:text="${prox.descricao}"></span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Desconto e cancelamento só antes da saída para entrega/retirada -->
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-medium">
+                                        Desconto
+                                        <span class="badge bg-success-subtle text-success-emphasis ms-1"
+                                              th:if="${pedido.descontoSolicitado and pedido.antesDaSaida}"
+                                              th:title="${pedido.motivoDesconto}">solicitado pelo atendente</span>
+                                    </label>
+                                    <th:block th:if="${pedido.antesDaSaida}">
+                                        <form th:replace="~{fragments/desconto :: form(${pedido}, '/pedidos')}"></form>
+                                    </th:block>
+                                    <div th:unless="${pedido.antesDaSaida}" class="small text-muted pt-1">Não permitido após a saída.</div>
+                                </div>
+                                <form class="col-md-4" th:if="${pedido.antesDaSaida}"
+                                      th:action="@{/pedidos/{id}/cancelar(id=${pedido.id})}" method="post"
+                                      onsubmit="return confirm('Cancelar este pedido? Esta ação não pode ser desfeita.')">
+                                    <label class="form-label small fw-medium">Cancelar pedido</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="justificativa" class="form-control"
+                                               placeholder="Justificativa (obrigatória)" required minlength="5" maxlength="300">
+                                        <button class="btn btn-danger" type="submit">Cancelar</button>
+                                    </div>
+                                </form>
+                                <div class="col-md-4 small text-muted pt-4" th:unless="${pedido.antesDaSaida}">
+                                    Cancelamento não permitido após a saída.
+                                </div>
+                            </div>
+
+                            <!-- ATENDENTE: solicitar cancelamento ao gerente (só antes da saída) -->
+                            <div sec:authorize="hasRole('ATENDENTE')" th:if="${pedido.antesDaSaida}">
+                                <form th:if="${!pedido.cancelamentoSolicitado}" class="row g-2 align-items-end"
+                                      th:action="@{/pedidos/{id}/solicitar-cancelamento(id=${pedido.id})}" method="post">
+                                    <div class="col-md-8">
+                                        <label class="form-label small fw-medium">Solicitar cancelamento ao gerente</label>
+                                        <input type="text" name="motivo" class="form-control form-control-sm"
+                                               placeholder="Motivo do cancelamento" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-sm btn-outline-danger w-100" type="submit">
+                                            <i class="bi bi-send"></i> Solicitar cancelamento
+                                        </button>
+                                    </div>
+                                </form>
+                                <p th:if="${pedido.cancelamentoSolicitado}" class="small text-muted mb-0">
+                                    Cancelamento já solicitado — aguardando o gerente.
+                                    Motivo: <span th:text="${pedido.motivoCancelamento}"></span>
+                                </p>
+                            </div>
+                            <p sec:authorize="hasRole('ATENDENTE')" th:unless="${pedido.antesDaSaida}" class="small text-muted mb-0">
+                                O pedido já saiu para entrega/retirada; não é mais possível solicitar cancelamento.
+                            </p>
+                        </td>
+                    </tr>
+                    </th:block>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(pedidos)}">
+            Total: <strong th:text="${#lists.size(pedidos)}"></strong> pedido(s)
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

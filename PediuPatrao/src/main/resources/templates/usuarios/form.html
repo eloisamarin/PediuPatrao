@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Usuário</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/usuarios}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold mb-0">
+            <span th:text="${usuarioId != null} ? 'Editar Usuário' : 'Novo Usuário'"></span>
+        </h2>
+    </div>
+
+    <div class="card shadow-sm" style="max-width: 540px;">
+        <div class="card-body p-4">
+
+            <form th:action="${usuarioId != null}
+                        ? @{/usuarios/editar/{id}(id=${usuarioId})}
+                        : @{/usuarios/salvar}"
+                  th:object="${usuario}"
+                  method="post">
+
+                <!-- Username (não pode ser alterado depois de criado: identifica o usuário na auditoria) -->
+                <div class="mb-3">
+                    <label for="username" class="form-label fw-medium">
+                        <i class="bi bi-person me-1"></i>Username
+                    </label>
+                    <input type="text"
+                           id="username"
+                           class="form-control"
+                           th:field="*{username}"
+                           th:readonly="${usuarioId != null}"
+                           placeholder="Ex: joao.silva"
+                           pattern="[A-Za-z0-9._\-]{3,30}" maxlength="30"
+                           autocomplete="off"
+                           title="3 a 30 caracteres: letras, números, ponto, hífen ou sublinhado"
+                           required/>
+                    <div class="form-text">3 a 30 caracteres: letras, números, ponto, hífen ou sublinhado.</div>
+                </div>
+
+                <!-- E-mail (usado no "Esqueci a senha") -->
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-medium">
+                        <i class="bi bi-envelope me-1"></i>E-mail
+                    </label>
+                    <input type="email"
+                           id="email"
+                           class="form-control"
+                           th:field="*{email}"
+                           placeholder="Ex: joao.silva@pizzaria.com"
+                           maxlength="254"
+                           autocomplete="off"/>
+                    <div class="form-text">
+                        Opcional, mas sem e-mail o usuário não consegue redefinir a senha sozinho pelo "Esqueci a senha".
+                    </div>
+                </div>
+
+                <!-- Senha -->
+                <div class="mb-3">
+                    <label for="password" class="form-label fw-medium">
+                        <i class="bi bi-lock me-1"></i>Senha
+                        <small class="text-muted fw-normal" th:if="${usuarioId != null}">
+                            — deixe em branco para manter a atual
+                        </small>
+                    </label>
+                    <div class="input-group">
+                        <input type="password"
+                               id="password"
+                               class="form-control"
+                               name="password"
+                               placeholder="8 a 72 caracteres, com letras e números"
+                               minlength="8" maxlength="72"
+                               autocomplete="new-password"
+                               th:required="${usuarioId == null}"/>
+                        <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                            <i class="bi bi-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                    <div class="form-text" th:if="${usuarioId != null}">
+                        Ao trocar a senha ou o perfil, a sessão aberta desse usuário é encerrada.
+                    </div>
+                </div>
+
+                <!-- Perfil: somente os perfis do sistema (validado também no servidor) -->
+                <div class="mb-4">
+                    <label for="role" class="form-label fw-medium">
+                        <i class="bi bi-shield me-1"></i>Perfil
+                    </label>
+                    <select id="role" class="form-select" th:field="*{role}" required>
+                        <option value="">Selecione um perfil</option>
+                        <option th:each="p : ${perfis}" th:value="${p}" th:text="${p} + ' — ' + ${p.descricao}"></option>
+                    </select>
+                    <div class="form-text">
+                        ADMIN: usuários, perfis e auditoria · GERENTE: pedidos, descontos e cancelamentos ·
+                        ATENDENTE: clientes e registro de pedidos.
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${usuarioId != null} ? 'Salvar Alterações' : 'Criar Usuário'"></span>
+                    </button>
+                    <a th:href="@{/usuarios}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Toggle mostrar/ocultar senha
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const input = document.getElementById('password');
+            const icon  = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        });
+    </script>
+
+</div>
+
+</body>
+</html>

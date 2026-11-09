@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Solicitações de Desconto</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-percent me-2 text-success"></i>Solicitações de Desconto
+        </h2>
+    </div>
+    <p class="text-muted small mb-4">
+        Solicitações feitas pelos atendentes. Escolha um atalho ou digite o desconto (limite de
+        <strong th:text="${descontoMaximo} + '%'">20%</strong> do valor do pedido). O valor só é atualizado depois que você aplica.
+        Para dar desconto num pedido sem solicitação, use o botão "Ações" na lista de Pedidos.
+    </p>
+
+    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow-sm" th:if="${#lists.isEmpty(pedidos)}">
+        <div class="card-body text-center text-muted py-5">
+            <i class="bi bi-check2-all fs-3 d-block mb-2"></i>
+            Nenhuma solicitação de desconto pendente.
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6" th:each="pedido : ${pedidos}">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <a th:href="@{/pedidos/{id}(id=${pedido.id})}" class="fw-medium text-decoration-none"
+                       th:text="${nomesClientes[pedido.clienteId] ?: pedido.clienteId}"></a>
+                    <span class="small text-muted"
+                          th:text="'Solicitado por ' + ${pedido.descontoSolicitadoPor} + (${pedido.dataSolicitacaoDesconto} != null ? ' em ' + ${#temporals.format(pedido.dataSolicitacaoDesconto, 'dd/MM HH:mm')} : '')"></span>
+                </div>
+                <div class="card-body">
+                    <div th:each="descricao : ${pedido.descricaoItens}" class="small" th:text="${descricao}"></div>
+                    <p class="small text-muted mt-2 mb-2" th:if="${pedido.motivoDesconto != null}">
+                        <i class="bi bi-chat-left-text me-1"></i>Motivo: <span th:text="${pedido.motivoDesconto}"></span>
+                    </p>
+                    <p class="mb-3">Valor atual:
+                        <strong th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorFinal, 1, 'POINT', 2, 'COMMA')}"></strong>
+                        <span class="ms-2" th:replace="~{fragments/status :: badge(${pedido})}"></span>
+                    </p>
+
+                    <!-- Atalhos 5/10/15/20% ou valor digitado (até 20%), com prévia do novo valor -->
+                    <div class="row g-2 align-items-start">
+                        <div class="col">
+                            <form th:replace="~{fragments/desconto :: form(${pedido}, '/pedidos/descontos')}"></form>
+                        </div>
+                        <div class="col-auto">
+                            <form method="post" th:action="@{/pedidos/{id}/rejeitar-desconto(id=${pedido.id})}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-x-lg"></i> Rejeitar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

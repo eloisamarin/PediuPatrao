@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Auditoria</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-journal-text me-2 text-primary"></i>Auditoria
+        </h2>
+        <!-- Filtro por entidade/registro (consulta no servidor) -->
+        <form th:action="@{/auditoria}" method="get" class="d-flex flex-wrap gap-2">
+            <select name="entidade" class="form-select form-select-sm" style="width: 150px;">
+                <option value="">Todas as entidades</option>
+                <option th:each="e : ${ {'Pedido','Cliente','Produto','Usuario'} }" th:value="${e}" th:text="${e}"
+                        th:selected="${e == filtroEntidade}"></option>
+            </select>
+            <input type="text" name="entidadeId" class="form-control form-control-sm" style="width: 220px;"
+                   placeholder="ID do registro (opcional)" th:value="${filtroId}">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Filtrar</button>
+            <a th:href="@{/auditoria}" class="btn btn-sm btn-outline-secondary">Limpar</a>
+        </form>
+    </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+        <p class="text-muted small mb-0">
+            Registros somente leitura (até 500, do mais recente para o mais antigo). Senhas e credenciais
+            nunca são gravadas; telefones aparecem mascarados.
+        </p>
+        <input type="search" id="filtroAuditoria" class="form-control form-control-sm" style="max-width: 260px;"
+               placeholder="Buscar nesta página...">
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-3">Data e hora</th>
+                        <th>Usuário</th>
+                        <th>Operação</th>
+                        <th>Entidade</th>
+                        <th style="min-width: 320px;">Campos alterados</th>
+                        <th>Justificativa</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaAuditoria">
+                    <tr th:if="${#lists.isEmpty(registros)}">
+                        <td colspan="6" class="text-center text-muted py-5">Nenhum registro de auditoria.</td>
+                    </tr>
+                    <tr th:each="r : ${registros}">
+                        <td class="ps-3 text-nowrap small" th:text="${#temporals.format(r.dataHora, 'dd/MM/yyyy — HH:mm:ss')}"></td>
+                        <td>
+                            <span class="fw-medium" th:text="${r.usuario}"></span>
+                            <span class="badge bg-light text-dark border d-block mt-1" style="width: fit-content;" th:text="${r.perfil}"></span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${r.eventoSeguranca} ? 'bg-danger' :
+                                                  (${#strings.startsWith(r.acao, 'CANCELAR') or r.acao == 'APLICAR_DESCONTO' or r.acao == 'ALTERAR_PERFIL'} ? 'bg-warning text-dark' :
+                                                  (${r.acao == 'ATUALIZAR_CLIENTE' or r.acao == 'REGISTRAR_SAIDA' or r.acao == 'ALTERAR_STATUS'} ? 'bg-info text-dark' : 'bg-secondary'))"
+                                  th:text="${r.operacao}"></span>
+                            <div class="small text-muted mt-1" th:if="${r.detalhes != null}" th:text="${r.detalhes}"></div>
+                        </td>
+                        <td class="small">
+                            <span th:text="${r.entidade ?: '—'}"></span>
+                            <a th:if="${r.entidadeId != null}" class="d-block font-monospace small text-decoration-none"
+                               th:href="@{/auditoria(entidade=${r.entidade},entidadeId=${r.entidadeId})}"
+                               th:text="${r.entidadeId}" title="Ver toda a auditoria deste registro"></a>
+                        </td>
+                        <td class="small">
+                            <!-- Campo / valor anterior / novo valor -->
+                            <table class="table table-sm table-borderless mb-0 bg-transparent" th:if="${!#lists.isEmpty(r.campos)}">
+                                <tr th:each="c : ${r.campos}">
+                                    <td class="p-0 pe-2 fw-medium text-nowrap" th:text="${c.campo}"></td>
+                                    <td class="p-0 pe-1 text-danger-emphasis text-decoration-line-through"
+                                        th:text="${c.valorAnterior ?: '∅'}"></td>
+                                    <td class="p-0 px-1 text-muted">→</td>
+                                    <td class="p-0 text-success-emphasis" th:text="${c.valorNovo ?: '∅'}"></td>
+                                </tr>
+                            </table>
+                            <!-- Registros antigos (formato texto) -->
+                            <div th:if="${#lists.isEmpty(r.campos) and (r.dadosAnteriores != null or r.dadosPosteriores != null)}">
+                                <div class="text-danger-emphasis" th:if="${r.dadosAnteriores != null}" th:text="'Antes: ' + ${r.dadosAnteriores}"></div>
+                                <div class="text-success-emphasis" th:if="${r.dadosPosteriores != null}" th:text="'Depois: ' + ${r.dadosPosteriores}"></div>
+                            </div>
+                            <span class="text-muted" th:if="${#lists.isEmpty(r.campos) and r.dadosAnteriores == null and r.dadosPosteriores == null}">—</span>
+                        </td>
+                        <td class="small" th:text="${r.justificativa ?: '—'}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('filtroAuditoria').addEventListener('input', function () {
+            const termo = this.value.toLowerCase();
+            document.querySelectorAll('#tabelaAuditoria > tr').forEach(tr => {
+                tr.style.display = tr.textContent.toLowerCase().includes(termo) ? '' : 'none';
+            });
+        });
+    </script>
+</div>
+
+</body>
+</html>
