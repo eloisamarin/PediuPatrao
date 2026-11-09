@@ -1,0 +1,10 @@
+# Carrega automaticamente os dashboards da pasta /var/lib/grafana/dashboards
+apiVersion: 1
+
+providers:
+  - name: Pediu Patrão
+    folder: Pediu Patrão
+    type: file
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,32 @@
+# Grafana já configurado para o Pediu Patrão.
+#
+# 1) Rode a aplicação Spring Boot na porta 8080 com a variável DASHBOARD_API_KEY definida.
+# 2) Nesta pasta:  docker compose up -d
+# 3) Abra http://localhost:3000  (usuário admin / senha admin — o Grafana pede para trocar)
+#
+# A chave abaixo precisa ser IGUAL à usada pela aplicação. Troque o valor padrão,
+# ou crie um arquivo .env nesta pasta com:  DASHBOARD_API_KEY=sua-chave
+services:
+  grafana:
+    image: grafana/grafana-oss:11.3.0
+    container_name: pediupatrao-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      DASHBOARD_API_KEY: ${DASHBOARD_API_KEY:-troque-esta-chave}
+      # Versão fixa do plugin: as versões 4.x exigem Grafana 11.6+ e não carregam no 11.3
+      GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource 3.7.1
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/pediupatrao.json
+      GF_USERS_DEFAULT_LANGUAGE: pt-BR
+    extra_hosts:
+      # Permite que o Grafana (no Docker) acesse a aplicação que roda no seu computador
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning
+      - ./dashboards:/var/lib/grafana/dashboards
+      - grafana-dados:/var/lib/grafana
+
+volumes:
+  grafana-dados:
