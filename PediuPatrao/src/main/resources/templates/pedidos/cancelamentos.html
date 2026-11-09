@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Solicitações de Cancelamento</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-x-octagon me-2 text-danger"></i>Solicitações de Cancelamento
+        </h2>
+    </div>
+
+    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Solicitado em</th>
+                        <th>Por</th>
+                        <th>Cliente</th>
+                        <th>Pedido</th>
+                        <th class="text-end">Valor</th>
+                        <th>Status</th>
+                        <th>Motivo</th>
+                        <th class="text-end pe-4">Decisão</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(pedidos)}">
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="bi bi-check2-all fs-3 d-block mb-2"></i>
+                            Nenhuma solicitação de cancelamento pendente.
+                        </td>
+                    </tr>
+                    <tr th:each="pedido : ${pedidos}">
+                        <td class="ps-4 small text-muted"
+                            th:text="${pedido.dataSolicitacaoCancelamento != null} ? ${#temporals.format(pedido.dataSolicitacaoCancelamento, 'dd/MM HH:mm')} : '—'"></td>
+                        <td th:text="${pedido.cancelamentoSolicitadoPor}"></td>
+                        <td th:text="${nomesClientes[pedido.clienteId] ?: pedido.clienteId}"></td>
+                        <td>
+                            <div th:each="descricao : ${pedido.descricaoItens}" class="small" th:text="${descricao}"></div>
+                        </td>
+                        <td class="text-end text-nowrap"
+                            th:text="${pedido.valorFinal != null} ? 'R$ ' + ${#numbers.formatDecimal(pedido.valorFinal, 1, 'POINT', 2, 'COMMA')} : '—'"></td>
+                        <td><span th:replace="~{fragments/status :: badge(${pedido})}"></span></td>
+                        <td th:text="${pedido.motivoCancelamento}"></td>
+                        <td class="text-end pe-4">
+                            <!-- Justificativa obrigatória do gerente (vem preenchida com o motivo do atendente) -->
+                            <form th:action="@{/pedidos/{id}/cancelar(id=${pedido.id})}" method="post"
+                                  class="input-group input-group-sm mb-1" style="min-width: 300px;"
+                                  onsubmit="return confirm('Confirmar o cancelamento deste pedido? Esta ação não pode ser desfeita.')">
+                                <input type="hidden" name="voltar" value="/pedidos/cancelamentos">
+                                <input type="text" name="justificativa" class="form-control" required minlength="5" maxlength="300"
+                                       placeholder="Justificativa" th:value="${pedido.motivoCancelamento}">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-x-lg"></i> Cancelar pedido
+                                </button>
+                            </form>
+                            <form th:action="@{/pedidos/{id}/rejeitar-cancelamento(id=${pedido.id})}" method="post" class="text-end">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Rejeitar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

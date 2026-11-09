@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Lista de Clientes</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-person-raised-hand me-2 text-primary"></i>Clientes
+        </h2>
+        <a th:href="@{/clientes/novo}" class="btn btn-primary" sec:authorize="hasRole('ATENDENTE')">
+            <i class="bi bi-plus-lg me-1"></i> Novo Cliente
+        </a>
+    </div>
+
+    <p class="text-muted small" sec:authorize="hasRole('GERENTE')">
+        <i class="bi bi-eye me-1"></i>Modo consulta: o cadastro e a atualização de clientes são feitos pelo atendente.
+    </p>
+
+    <!-- Mensagens de feedback -->
+    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Tabela de clientes (renderizada no servidor) -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Nome</th>
+                        <th>Telefone</th>
+                        <th>Endereço</th>
+                        <th class="text-end pe-4" sec:authorize="hasRole('ATENDENTE')">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(clientes)}">
+                        <td colspan="4" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            Nenhum cliente cadastrado.
+                        </td>
+                    </tr>
+                    <tr th:each="cliente : ${clientes}">
+                        <td class="ps-4" th:text="${cliente.nome ?: '—'}"></td>
+                        <td th:text="${cliente.telefone ?: '—'}"></td>
+                        <td th:text="${cliente.enderecoFormatado}"></td>
+                        <td class="text-end pe-4" sec:authorize="hasRole('ATENDENTE')">
+                            <a th:href="@{/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil-fill"></i> Editar
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(clientes)}">
+            Total: <strong th:text="${#lists.size(clientes)}"></strong> cliente(s)
+        </div>
+    </div>
+</div>
+</body>
+</html>

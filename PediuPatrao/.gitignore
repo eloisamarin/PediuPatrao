@@ -1,0 +1,6 @@
+/target/
+
+# Chave do Grafana (não versionar)
+grafana/.env
+.idea/
+nbactions*.xml
