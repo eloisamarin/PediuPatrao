@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Novo Pedido</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/pedidos}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold mb-0">Novo Pedido</h2>
+    </div>
+
+    <div class="alert alert-danger" th:if="${erro}" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${erro}"></span>
+    </div>
+    <div class="alert alert-warning" th:if="${#lists.isEmpty(clientes)}">
+        Nenhum cliente cadastrado. <a th:href="@{/clientes/novo}">Cadastre um cliente</a> antes de registrar o pedido.
+    </div>
+    <div class="alert alert-warning" th:if="${#lists.isEmpty(produtos)}">
+        Nenhum produto ativo com preço. Peça ao gerente para cadastrar produtos.
+    </div>
+
+    <div class="card shadow-sm" style="max-width: 860px;">
+        <div class="card-body p-4">
+            <!-- Valores, status e desconto são definidos pelo servidor, não pelo formulário -->
+            <form th:action="@{/pedidos/salvar}" th:object="${pedido}" method="post" id="formPedido">
+
+                <div class="mb-4" style="max-width: 480px;">
+                    <label for="clienteId" class="form-label fw-medium"><i class="bi bi-person me-1"></i>Cliente</label>
+                    <select id="clienteId" class="form-select" th:field="*{clienteId}" required>
+                        <option value="">Selecione o cliente</option>
+                        <option th:each="c : ${clientes}" th:value="${c.id}"
+                                th:text="${c.nome} + (${c.telefone} != null ? ' — ' + ${c.telefone} : '')"></option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-medium"><i class="bi bi-basket me-1"></i>Itens do pedido</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnAdicionarItem">
+                        <i class="bi bi-plus-lg"></i> Adicionar produto
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle mb-2">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="min-width: 220px;">Produto</th>
+                                <th>Sabor / observação</th>
+                                <th style="width: 110px;">Qtd</th>
+                                <th class="text-end" style="width: 120px;">Subtotal</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itensPedido"></tbody>
+                    </table>
+                </div>
+
+                <p class="text-end fs-5 mb-3">Total: <strong id="total">R$ 0,00</strong></p>
+
+                <!-- Desconto: o atendente só solicita; o gerente escolhe 10, 20, 50 ou 100% e só então o valor muda -->
+                <div class="border rounded p-3 mb-4 bg-light">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="solicitarDesconto" name="solicitarDesconto" value="true">
+                        <label class="form-check-label fw-medium" for="solicitarDesconto">
+                            <i class="bi bi-percent me-1"></i>Solicitar desconto
+                        </label>
+                    </div>
+                    <div id="blocoMotivoDesconto" class="mt-2" style="display: none;">
+                        <input type="text" class="form-control form-control-sm" id="motivoDesconto" name="motivoDesconto"
+                               maxlength="200" placeholder="Motivo do desconto (ex.: cliente fiel, pedido atrasado)">
+                        <div class="form-text">
+                            O pedido será registrado pelo valor cheio. O gerente recebe a solicitação, escolhe
+                            5%, 10%, 15% ou 20% e só depois da aprovação o valor do pedido é atualizado.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Registrar Pedido</button>
+                    <a th:href="@{/pedidos}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modelo de linha de item (clonado pelo JavaScript) -->
+    <template id="modeloItem">
+        <tr>
+            <td>
+                <select class="form-select form-select-sm item-produto" required>
+                    <option value="">Selecione o produto</option>
+                    <option th:each="p : ${produtos}" th:value="${p.id}" th:attr="data-preco=${p.preco}"
+                            th:text="${p.nome} + ' — R$ ' + ${#numbers.formatDecimal(p.preco, 1, 'POINT', 2, 'COMMA')}"></option>
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm item-sabor" placeholder="Ex: Calabresa" style="min-width: 140px;"></td>
+            <td><input type="number" class="form-control form-control-sm item-quantidade" value="1" min="1" max="100" required style="min-width: 70px;"></td>
+            <td class="text-end text-nowrap item-subtotal">R$ 0,00</td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger item-remover" title="Remover item">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <script>
+        // Os valores mostrados aqui são só uma prévia: o servidor recalcula tudo pelo preço cadastrado
+        (function () {
+            const corpo = document.getElementById('itensPedido');
+            const modelo = document.getElementById('modeloItem');
+            const total = document.getElementById('total');
+            const MAXIMO_ITENS = 30;
+            const moeda = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Os campos precisam se chamar itens[0].produtoId, itens[1].produtoId... para o Spring montar a lista
+            function renumerar() {
+                corpo.querySelectorAll('tr').forEach((tr, i) => {
+                    tr.querySelector('.item-produto').name = `itens[${i}].produtoId`;
+                    tr.querySelector('.item-sabor').name = `itens[${i}].sabor`;
+                    tr.querySelector('.item-quantidade').name = `itens[${i}].quantidade`;
+                });
+                const linhas = corpo.querySelectorAll('tr').length;
+                corpo.querySelectorAll('.item-remover').forEach(b => b.disabled = linhas === 1);
+                document.getElementById('btnAdicionarItem').disabled = linhas >= MAXIMO_ITENS;
+            }
+
+            function recalcular() {
+                let soma = 0;
+                corpo.querySelectorAll('tr').forEach(tr => {
+                    const opt = tr.querySelector('.item-produto').selectedOptions[0];
+                    const preco = parseFloat(opt && opt.dataset.preco ? opt.dataset.preco : 0);
+                    const qtd = parseInt(tr.querySelector('.item-quantidade').value, 10) || 0;
+                    const subtotal = preco * qtd;
+                    tr.querySelector('.item-subtotal').textContent = moeda(subtotal);
+                    soma += subtotal;
+                });
+                total.textContent = moeda(soma);
+            }
+
+            function adicionarItem() {
+                const linha = modelo.content.firstElementChild.cloneNode(true);
+                linha.querySelector('.item-produto').addEventListener('change', recalcular);
+                linha.querySelector('.item-quantidade').addEventListener('input', recalcular);
+                linha.querySelector('.item-remover').addEventListener('click', () => {
+                    linha.remove();
+                    renumerar();
+                    recalcular();
+                });
+                corpo.appendChild(linha);
+                renumerar();
+                recalcular();
+                linha.querySelector('.item-produto').focus();
+            }
+
+            document.getElementById('btnAdicionarItem').addEventListener('click', adicionarItem);
+            adicionarItem(); // começa com uma linha
+
+            const chkDesconto = document.getElementById('solicitarDesconto');
+            chkDesconto.addEventListener('change', () => {
+                document.getElementById('blocoMotivoDesconto').style.display = chkDesconto.checked ? '' : 'none';
+            });
+        })();
+    </script>
+</div>
+
+</body>
+</html>

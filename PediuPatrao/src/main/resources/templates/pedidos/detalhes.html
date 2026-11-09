@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Detalhes do Pedido</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/pedidos}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold mb-0">Pedido</h2>
+        <code class="text-muted" th:text="${pedido.id}"></code>
+        <span th:replace="~{fragments/status :: badge(${pedido})}"></span>
+        <a class="btn btn-sm btn-outline-primary ms-auto" sec:authorize="hasAnyRole('ADMIN','GERENTE')"
+           th:href="@{/auditoria(entidade='Pedido',entidadeId=${pedido.id})}">
+            <i class="bi bi-journal-text"></i> Ver auditoria
+        </a>
+    </div>
+
+    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row g-3" style="max-width: 1000px;">
+
+        <!-- Registro -->
+        <div class="col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-medium"><i class="bi bi-info-circle me-1"></i>Registro</div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5">Cliente</dt>
+                        <dd class="col-7" th:text="${nomeCliente}"></dd>
+                        <dt class="col-5">Entrada</dt>
+                        <dd class="col-7" th:text="${pedido.dataCriacao != null} ? ${#temporals.format(pedido.dataCriacao, 'dd/MM/yyyy HH:mm:ss')} : '—'"></dd>
+                        <dt class="col-5">Registrado por</dt>
+                        <dd class="col-7" th:text="${pedido.criadoPor ?: '—'}"></dd>
+                        <th:block th:if="${pedido.dataSaida != null}">
+                            <dt class="col-5">Saída</dt>
+                            <dd class="col-7">
+                                <span th:text="${#temporals.format(pedido.dataSaida, 'dd/MM/yyyy HH:mm:ss')}"></span>
+                                <div class="text-muted"
+                                     th:text="(${pedido.tipoSaida == 'RETIRADO'} ? 'Retirado' : 'Saiu para entrega') + ' — responsável: ' + ${pedido.responsavelSaida}"></div>
+                            </dd>
+                        </th:block>
+                        <th:block th:if="${pedido.dataFinalizacao != null}">
+                            <dt class="col-5">Finalizado</dt>
+                            <dd class="col-7" th:text="${#temporals.format(pedido.dataFinalizacao, 'dd/MM/yyyy HH:mm:ss')} + ' por ' + ${pedido.finalizadoPor}"></dd>
+                        </th:block>
+                        <th:block th:if="${pedido.descontoSolicitadoPor != null}">
+                            <dt class="col-5">Desconto solicitado por</dt>
+                            <dd class="col-7">
+                                <span th:text="${pedido.descontoSolicitadoPor}"></span>
+                                <span class="badge bg-success-subtle text-success-emphasis ms-1" th:if="${pedido.descontoSolicitado}">aguardando gerente</span>
+                                <div class="text-muted" th:if="${pedido.motivoDesconto != null}" th:text="'Motivo: ' + ${pedido.motivoDesconto}"></div>
+                            </dd>
+                        </th:block>
+                        <th:block th:if="${pedido.descontoAplicadoPor != null}">
+                            <dt class="col-5">Desconto autorizado por</dt>
+                            <dd class="col-7">
+                                <span th:text="${pedido.descontoAplicadoPor}"></span>
+                                <span class="text-muted" th:if="${pedido.dataDesconto != null}"
+                                      th:text="' em ' + ${#temporals.format(pedido.dataDesconto, 'dd/MM/yyyy HH:mm')}"></span>
+                            </dd>
+                        </th:block>
+                        <th:block th:if="${pedido.cancelamentoSolicitado or pedido.canceladoPor != null}">
+                            <dt class="col-5">Cancelamento</dt>
+                            <dd class="col-7">
+                                <div th:if="${pedido.cancelamentoSolicitadoPor != null}"
+                                     th:text="'Solicitado por ' + ${pedido.cancelamentoSolicitadoPor}"></div>
+                                <div th:if="${pedido.canceladoPor != null}"
+                                     th:text="'Cancelado por ' + ${pedido.canceladoPor} + (${pedido.dataCancelamento} != null ? ' em ' + ${#temporals.format(pedido.dataCancelamento, 'dd/MM/yyyy HH:mm')} : '')"></div>
+                                <div class="text-muted" th:if="${pedido.motivoCancelamento != null}"
+                                     th:text="'Motivo da solicitação: ' + ${pedido.motivoCancelamento}"></div>
+                                <div th:if="${pedido.justificativaCancelamento != null}"
+                                     th:text="'Justificativa: ' + ${pedido.justificativaCancelamento}"></div>
+                                <div class="text-muted" th:if="${pedido.statusAntesDoCancelamento != null}"
+                                     th:text="'Status antes do cancelamento: ' + ${pedido.statusAntesDoCancelamento}"></div>
+                            </dd>
+                        </th:block>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Itens e valores -->
+        <div class="col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-medium"><i class="bi bi-basket me-1"></i>Itens e valores</div>
+                <div class="card-body p-0">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Produto</th>
+                                <th class="text-center">Qtd</th>
+                                <th class="text-end">Preço unit.</th>
+                                <th class="text-end pe-3">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${pedido.itens}">
+                                <td class="ps-3">
+                                    <span th:text="${item.nomeProduto}"></span>
+                                    <div class="small text-muted" th:if="${item.sabor != null}" th:text="${item.sabor}"></div>
+                                </td>
+                                <td class="text-center" th:text="${item.quantidade}"></td>
+                                <td class="text-end text-nowrap" th:text="'R$ ' + ${#numbers.formatDecimal(item.precoUnitario, 1, 'POINT', 2, 'COMMA')}"></td>
+                                <td class="text-end text-nowrap pe-3" th:text="'R$ ' + ${#numbers.formatDecimal(item.subtotal, 1, 'POINT', 2, 'COMMA')}"></td>
+                            </tr>
+                            <!-- Pedido antigo (antes da lista de itens) -->
+                            <tr th:if="${#lists.isEmpty(pedido.itens)}">
+                                <td class="ps-3" colspan="4" th:text="${#strings.listJoin(pedido.descricaoItens, '; ')} ?: '—'"></td>
+                            </tr>
+                        </tbody>
+                        <tfoot th:if="${pedido.valorFinal != null}">
+                            <tr>
+                                <td colspan="3" class="text-end ps-3">Valor bruto</td>
+                                <td class="text-end text-nowrap pe-3" th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorBruto, 1, 'POINT', 2, 'COMMA')}"></td>
+                            </tr>
+                            <tr th:if="${pedido.valorDesconto != null and pedido.valorDesconto > 0}" class="text-success">
+                                <td colspan="3" class="text-end ps-3"
+                                    th:text="'Desconto (' + ${#numbers.formatDecimal(pedido.descontoPercentual, 1, 'POINT', 1, 'COMMA')} + '%)'"></td>
+                                <td class="text-end text-nowrap pe-3" th:text="'- R$ ' + ${#numbers.formatDecimal(pedido.valorDesconto, 1, 'POINT', 2, 'COMMA')}"></td>
+                            </tr>
+                            <tr class="fw-bold fs-5">
+                                <td colspan="3" class="text-end ps-3">Total</td>
+                                <td class="text-end text-nowrap pe-3" th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorFinal, 1, 'POINT', 2, 'COMMA')}"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico de entrada, transições e saída -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header fw-medium"><i class="bi bi-clock-history me-1"></i>Histórico de status</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Data/hora</th>
+                                <th>De</th>
+                                <th>Para</th>
+                                <th>Responsável</th>
+                                <th>Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(pedido.historico)}">
+                                <td colspan="5" class="ps-3 text-muted">Pedido registrado antes do controle de histórico.</td>
+                            </tr>
+                            <tr th:each="h : ${pedido.historico}">
+                                <td class="ps-3 text-nowrap" th:text="${#temporals.format(h.dataHora, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                                <td class="text-muted" th:text="${h.statusAnterior ?: '—'}"></td>
+                                <td class="fw-medium" th:text="${h.statusNovo}"></td>
+                                <td th:text="${h.usuario}"></td>
+                                <td class="small" th:text="${h.observacao}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

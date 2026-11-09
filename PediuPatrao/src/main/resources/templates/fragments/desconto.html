@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Formulário de desconto do GERENTE (usado na lista de pedidos e na aba Descontos).
+  - Atalhos 5/10/15/20% preenchem o campo; o gerente também pode digitar outro valor.
+  - Limite de 20%: o navegador bloqueia (max=20) e o servidor valida de novo (PedidoService).
+  - Mostra a prévia do novo valor; o valor real é recalculado no servidor.
+-->
+<form th:fragment="form(pedido, voltar)" method="post" class="form-desconto"
+      th:action="@{/pedidos/{id}/desconto(id=${pedido.id})}"
+      th:attr="data-bruto=${pedido.valorBruto}"
+      onsubmit="return confirm('Aplicar ' + this.percentual.value + '% de desconto neste pedido?')">
+    <input type="hidden" name="voltar" th:value="${voltar}">
+
+    <div class="d-flex flex-wrap gap-1 mb-2">
+        <button type="button" class="btn btn-sm btn-outline-success"
+                th:each="pct : ${ {5, 10, 15, 20} }" th:text="${pct} + '%'"
+                th:attr="data-pct=${pct}" onclick="preencherDesconto(this)">10%</button>
+    </div>
+
+    <div class="input-group input-group-sm mb-1">
+        <input type="number" name="percentual" class="form-control" placeholder="Outro valor"
+               min="0.01" max="20" step="0.01" required
+               title="Digite um desconto maior que 0% e no máximo 20%"
+               th:value="${pedido.descontoPercentual != null and pedido.descontoPercentual > 0} ? ${pedido.descontoPercentual} : ''"
+               oninput="previaDesconto(this)">
+        <span class="input-group-text">%</span>
+        <button type="submit" class="btn btn-success">Aplicar</button>
+    </div>
+    <input type="text" name="motivo" class="form-control form-control-sm mb-1" maxlength="200"
+           placeholder="Motivo ">
+    <div class="form-text previa-desconto">Máximo de 20% do valor do pedido.</div>
+</form>
+</body>
+</html>

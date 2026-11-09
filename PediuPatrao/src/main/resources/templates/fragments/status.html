@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Selo de status do pedido, usado em todas as telas. Aceita nomes antigos (EM_PREPARO, ENTREGUE). -->
+<span th:fragment="badge(pedido)" class="badge"
+      th:with="s=${pedido.statusAtual}"
+      th:classappend="${s == null} ? 'bg-secondary' :
+                      (${s.name() == 'FINALIZADO'} ? 'bg-success' :
+                      (${s.name() == 'CANCELADO'} ? 'bg-danger' :
+                      (${s.name() == 'EM_PREPARACAO'} ? 'bg-warning text-dark' :
+                      (${s.name() == 'PRONTO'} ? 'bg-primary' :
+                      (${s.isSaida()} ? 'bg-info text-dark' : 'bg-secondary')))))"
+      th:text="${s != null} ? ${s.descricao} : ${pedido.status}">RECEBIDO</span>
+</body>
+</html>
